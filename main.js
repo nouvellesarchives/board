@@ -125,22 +125,6 @@ function shuffle(c) {
   updateBoardMeta(currentBoard.title, false)
 }
 
-async function requestWritePermission() {
-  try {
-    const permission = await fileHandle.requestPermission({ mode: 'readwrite' });
-    if (permission === 'granted') {
-      console.log('Write permission granted');
-      return true;
-    } else {
-      console.log('Write permission denied');
-      return false;
-    }
-  } catch (err) {
-    console.error('Error requesting permission:', err);
-    return false;
-  }
-}
-
 async function saveBoard() {
   console.log("board", board.length)
   const str = JSON.stringify(board);
@@ -160,36 +144,6 @@ async function saveBoard() {
   }
 }
 
-async function saveBoardAs() {
-  console.log("board", board.length)
-  const str = JSON.stringify(board);
-  const blob = new Blob([str], { type: 'application/octet-stream' });
-
-  const now = new Date().toISOString().slice(0, 10);
-
-  console.log(board)
-  if (blob) {
-    await fileSave(blob, {
-      fileName: currentBoard.title === "untitled" ? "untitled" + "-" + now + ".board" : currentBoard.title + ".board",
-      extensions: [".board"]
-    })
-
-    updateBoardMeta(currentBoard.title, true)
-    currentBoard.lastSave = board
-  }
-}
-
-// /**
-//  * @param {*} name 
-//  * @param {*} saved 
-//  */
-// function writeBoard(name, saved) {
-//   const ls = window.localStorage
-//   ls.setItem("board-name", name)
-//   ls.setItem("board-saved", saved)
-//   currentBoard.name = name
-//   currentBoard.saved = saved
-// }
 
 /**
  * @param {*} title 
@@ -347,11 +301,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   new Sortable(gridContainer, {
+    filter: '.selection',
     animation: 150,
     ghostClass: 'dragging',
     onEnd: () => {
       updateBoard()
-    }
+    },
   });
 
   document.addEventListener('paste', (event) => {
