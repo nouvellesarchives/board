@@ -11,4 +11,4 @@ from you!
 license
 -------
 
-MIT License. See [LICENSE](LICENSE).
+Apache-2.0 license. See [LICENSE](LICENSE).
