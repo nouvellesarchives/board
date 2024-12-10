@@ -79,7 +79,6 @@ const reduce = new ImageProcessor(500);
 let selectionMode = false
 let selection = []
 let board = []
-let fileHandle;
 let currentBoard = {
   title: "untitled",
   path: "",
@@ -153,6 +152,7 @@ function updateBoardMeta(title, saved) {
   const n = document.getElementById("board-title");
   // @ts-ignore
   n.value = title
+  // @ts-ignore
   if (safari) { n.style.width = (title.length * 0.38) + "rem" }
   currentBoard.title = title
   const s = document.querySelector('[data-saved]');
@@ -275,6 +275,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         selection.forEach((s) => {
           document.getElementById(s)?.setAttribute('data-selected', 'false')
         })
+        selection.length = 0
       }
     } else if ((event.metaKey || event.ctrlKey) && event.code === 'KeyK') {
       event.preventDefault()
@@ -285,7 +286,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       updateBoard();
     } else if (event.ctrlKey && event.code === 'KeyS') {
       event.preventDefault()
-      console.log("saaavee")
       saveBoard();
     } else if (event.ctrlKey && event.code == "KeyO") {
       event.preventDefault()
