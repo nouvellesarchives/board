@@ -178,11 +178,72 @@ function updateBoard() {
 /**
  * @param {HTMLElement | null} c 
  */
+async function loadImages(c) {
+  try {
+    const images = await fileOpen({
+      mimeTypes: ['image/*'],
+      description: "Insert images",
+      multiple: true,
+      id: 'images',
+      excludeAcceptAllOption: true,
+    })
+
+    images.forEach(async (i) => {
+      const blob = new Blob([await i.arrayBuffer()], { type: i.type });
+      reduce.render(blob)
+        .then(({ out, ar }) => {
+          const reader = new FileReader();
+
+          const isPortrait = ar.includes(':')
+            && parseInt(ar.split(':')[0]) < parseInt(ar.split(':')[1]);
+          console.log('is portrait:', isPortrait);
+
+          const id = genID()
+
+          reader.onload = function (event) {
+            const gridItem = document.createElement('li');
+            gridItem.setAttribute('data-selected', 'false')
+            gridItem.id = id
+            gridItem.addEventListener('click', (e) => {
+              if (!selectionMode) { return }
+              const isSelected = e.target?.getAttribute('data-selected') === 'true'
+              console.log(isSelected)
+              if (isSelected) {
+                e.target?.setAttribute('data-selected', false)
+              } else {
+                e.target?.setAttribute('data-selected', true)
+                selection.push(e.target?.id)
+              }
+            })
+            const img = document.createElement('img');
+            img.src = event.target?.result?.toString() || "";
+            img.setAttribute('data-porta', isPortrait)
+            img.addEventListener('dragstart', (e) => e.preventDefault());
+            gridItem.appendChild(img);
+            c?.insertBefore(gridItem, c.firstChild);
+          };
+
+          updateBoard();
+          reader.readAsDataURL(out);
+        })
+        .catch((err) => {
+          console.error('Error during image compression:', err);
+        });
+    });
+  } catch (err) {
+    console.error('Error opening the board:', err);
+  }
+}
+
+/**
+ * @param {HTMLElement | null} c 
+ */
 async function openBoard(c) {
   try {
     const file = await fileOpen({
       extensions: [".board"],
-      description: "Boards"
+      description: "Boards",
+      id: 'boards',
     })
     const buf = await file.arrayBuffer();
     const str = new TextDecoder().decode(buf)
@@ -309,9 +370,26 @@ document.addEventListener('DOMContentLoaded', async () => {
     },
   });
 
+  function checkClip(event) {
+    const items = (event.clipboardData || event.originalEvent.clipboardData)?.items;
+
+    if (!items) return;
+
+    for (const item of items) {
+      if (item.kind === 'file' && item.type.startsWith('image/')) {
+        console.log('Image detected on clipboard');
+        return true;
+      }
+    }
+
+    console.log('No images found on clipboard');
+    return false;
+  }
+
   document.addEventListener('paste', (event) => {
     //@ts-ignore
     const items = (event.clipboardData || event.originalEvent.clipboardData).items;
+    if (!checkClip(event)) { loadImages(gridContainer); }
     for (let index in items) {
       const item = items[index];
       if (item.kind === 'file' && item.type.startsWith('image/')) {
